@@ -1,4 +1,6 @@
-const URL = "https://api.etherscan.io/api?module=account&action=txlist&address=0x240Eb7B9Bde39819E05054EFeB412Ce55250898c&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=YourApiKeyToken";
+const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
+const ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
+const URL = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
 
 showDataGrid();
 
@@ -9,13 +11,12 @@ async function showDataGrid() {
     //console.log(data)
     //document.write(JSON.stringify(data));
     const columnDefs = [
-        { field: "blockNumber", sortable: true, filter: true },
-        { field:  "timestamp", valueFormatter:(v)=>new Date(v), sortable: true, filter: true },
-        { field: "hash",sortable: true, filter: true },
-        { field: "value",sortable: true, filter: true },
-        { field: "gas",sortable: true, filter: true },
-        { field: "gasPrice",sortable: true, filter: true },
-        { field: "gasUsed",sortable: true, filter: true },
+        { headerName:'Date', field:  "timeStamp", valueFormatter:(p)=> new Date(Number(p.value * 1000)).toISOString().split('T')[0], sortable: true, filter: true },
+        { headerName:'Time', field:  "timeStamp", valueFormatter:(p)=> new Date(Number(p.value * 1000)).toISOString().split('T')[1].split('.')[0], sortable: true, filter: true},
+        { headerName:'Value', field: "value", valueFormatter:(p) =>(p.value / Math.pow(10, 18)) + " Ether",sortable: true, filter: true, editable: true },
+        { headerName:'IN/OUT', field:  "to", valueFormatter:(p)=>p.value.toLowerCase() === ADR.toLowerCase()?'IN':'OUT', sortable: true, filter: true},
+        { headerName:'Txn Hash', field: "hash",sortable: true, filter: true, editable: true },
+        { headerName:'Txn Fee', field: "gasPrice",valueFormatter:(p) =>(p.value / Math.pow(10, 18)) + " Ether", sortable: true, filter: true },
         ];
 
     // specify the data
@@ -25,7 +26,10 @@ async function showDataGrid() {
     const gridOptions = {
         pagination: true,
         columnDefs: columnDefs,
-        rowData: rowData
+        rowData: rowData,
+        defaultColDef : {
+            resizable: true,
+        },
         };
 
     // lookup the container we want the Grid to use
@@ -33,5 +37,6 @@ async function showDataGrid() {
 
     // create the grid passing in the div to use together with the columns & data we want to use
     new agGrid.Grid(eGridDiv, gridOptions);
+
 
 }
