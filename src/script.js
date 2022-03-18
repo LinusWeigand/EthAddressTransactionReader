@@ -1,6 +1,7 @@
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
-let URL_ETHERSCAN = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`
 
 let rowData = [];
 const input = document.querySelector("#exampleFormControlInput1");
@@ -25,25 +26,33 @@ const gridOptions = {
     },
 };
 input.addEventListener("keyup", (e)=> {
-    console.log(input.value)
 })
 
 const button = document.querySelector("#okButton")
-button.addEventListener("mousedown", (e) => {
-    console.log('event:mouseDown')
+button.addEventListener("mousedown", async (e) => {
     toggleSpinner();
     gridOptions.api && gridOptions.api.destroy();
-    if(isAddress(input.value)) {
-        ADR = input.value
-        URL_ETHERSCAN = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+    var address = input.value.trim()
+    if(isAddress(address)) {
+        balance = await fetchBalance();
+        ADR = address
+        URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+        URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
         fetchData();
+        setBalance(balance);
+       
     }else {
         toggleSpinner();
-        alert('not a valid eth adress');
+        alert('Not a valid eth address!');
         //const errorMessageParagraph = document.querySelector('#errorMessage');
         //errorMessageParagraph.innerHTML = 'not a valid eth address';
     }
 })
+
+const setBalance = (balance) => {
+        const balance_label=document.querySelector('#account_balance');
+        balance_label.innerHTML = `Balance: ${gweiToEth(Number(balance))} ETH`;
+}
 
 async function getEthPrice(timeStamp, gData) {
     //604800 seconds -> 7 days
@@ -58,30 +67,41 @@ calcPriceThen = (data, gData, i) => {
     return euro;
 }
 
+const fetchBalance = async () => {
+    let response_balance = await fetch(URL_ETHERSCAN_ACCOUNT_BALANCE)
+    const response = await response_balance.json();
+    return response.result;
+ 
+} 
+
 
 async function fetchData() {
-    const response = await fetch(URL_ETHERSCAN);
-    const data = await response.json();
+    const response_transactions = await fetch(URL_ETHERSCAN_TRANSACTIONS);
+    const data_transactions = await response_transactions.json();
+
+    
+
     const ethPrices = [];
     
-    for(let i=0; i<data.result.length; i++){
-        const ethResp = await getEthPrice(data.result[i].timeStamp, data);
+    
+    for(let i=0; i<data_transactions.result.length; i++){
+        const ethResp = await getEthPrice(data_transactions.result[i].timeStamp, data_transactions);
         if(ethResp.Data.Data){
-            data.result[i].price = ethResp.Data.Data[1].close;
-            data.result[i].valueInEuro = data.result[i].price * gweiToEth(data.result[i].value)
-            data.result[i].fee = data.result[i].gasPrice * data.result[i].gasUsed
-            data.result[i].feeInEuro = data.result[i].price * gweiToEth(data.result[i].fee)
-            ethPrices.push(data.result[i]);
+            data_transactions.result[i].price = ethResp.Data.Data[1].close;
+            data_transactions.result[i].valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value)
+            data_transactions.result[i].fee = data_transactions.result[i].gasPrice * data_transactions.result[i].gasUsed
+            data_transactions.result[i].feeInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].fee)
+            ethPrices.push(data_transactions.result[i]);
         }
     };
      
     showGrid(ethPrices);
-
+    return 1
+    
 }
 
 const showGrid = (ethPrices) => {
     toggleSpinner();
-    console.log(ethPrices)
 
     // let the grid know which columns and what data to use
     gridOptions.rowData = ethPrices;
@@ -102,9 +122,6 @@ toggleSpinner = () => {
     }
 }
 
-async function test() {
-    return 1
-}
 
 function gweiToEth(gwei) {
     return gwei / Math.pow(10, 18)
