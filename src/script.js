@@ -28,8 +28,8 @@ const gridOptions = {
 input.addEventListener("keyup", (e)=> {
 })
 
-const button = document.querySelector("#okButton")
-button.addEventListener("mousedown", async (e) => {
+const okButton = document.querySelector("#okButton")
+okButton.addEventListener("mousedown", async (e) => {
     toggleSpinner();
     gridOptions.api && gridOptions.api.destroy();
     var address = input.value.trim()
@@ -47,6 +47,10 @@ button.addEventListener("mousedown", async (e) => {
         //const errorMessageParagraph = document.querySelector('#errorMessage');
         //errorMessageParagraph.innerHTML = 'not a valid eth address';
     }
+})
+const exportButton = document.querySelector("#exportButton")
+exportButton.addEventListener("mousedown", (e) => {
+    gridOptions.api && gridOptions.api.exportDataAsCsv();
 })
 
 const getInputAndOutputValueInEuro = (data_transactions) => {
