@@ -11,7 +11,7 @@ const columnDefs = [
     { headerName: 'Time', field: "timeStamp", valueFormatter: (p) => new Date(Number(p.value * 1000)).toISOString().split('T')[1].split('.')[0], sortable: true, filter: true, editable: true },
     { headerName: 'Value', field: "value", valueFormatter: (p) => (gweiToEth(p.value)) + " ETH", sortable: true, filter: true, editable: true },
     { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'IN/OUT', field: "to", valueFormatter: (p) => p.value.toLowerCase() === ADR.toLowerCase() ? 'IN' : 'OUT', sortable: true, filter: true },
+    { headerName: 'IN/OUT', field: "to", valueFormatter: (p) => inOrOut(p.value), sortable: true, filter: true },
     { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
     { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => (p.value / Math.pow(10, 18)) + " ETH", sortable: true, filter: true, editable: true },
     { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true },
@@ -33,14 +33,14 @@ button.addEventListener("mousedown", async (e) => {
     toggleSpinner();
     gridOptions.api && gridOptions.api.destroy();
     var address = input.value.trim()
-    if(isAddress(address)) {
+    if(isAddress(address)) {    
         balance = await fetchBalance();
         ADR = address
         URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
         URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
         fetchData();
         setBalance(balance);
-       
+        
     }else {
         toggleSpinner();
         alert('Not a valid eth address!');
@@ -49,12 +49,38 @@ button.addEventListener("mousedown", async (e) => {
     }
 })
 
+const getInputAndOutputValueInEuro = (data_transactions) => {
+    var profit = 0
+    var input = 0
+    var output = 0
+    data_transactions.map((it) => {
+        if(inOrOut(it.to) === "IN") {
+            input += it.valueInEuro
+        }else {
+            output += it.valueInEuro
+        }
+        profit += inOrOut(it.to) === "IN" ? it.valueInEuro : -it.valueInEuro
+    })
+    console.log(input, output, profit)
+    return [input, output, profit]
+}
+
+const setValues = (input, output, profit) => {
+    const input_label = document.querySelector('#input');
+    const output_label = document.querySelector('#output');
+    const profit_label = document.querySelector('#profit')
+    
+    input_label.innerHTML = `Input: ${Math.round(input * 100) / 100} €`;
+    output_label.innerHTML = `Output: ${Math.round(output * 100) / 100} €`;
+    profit_label.innerHTML = `Profit: ${Math.round(profit * 100) / 100} €`;
+}
+
 const setBalance = (balance) => {
         const balance_label=document.querySelector('#account_balance');
         balance_label.innerHTML = `Balance: ${gweiToEth(Number(balance))} ETH`;
 }
 
-async function getEthPrice(timeStamp, gData) {
+async function getEthPrice(timeStamp) {
     //604800 seconds -> 7 days
     const URL_CRYPTOCOMPARE = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=${timeStamp}`
     const response = await fetch(URL_CRYPTOCOMPARE);
@@ -94,7 +120,9 @@ async function fetchData() {
             ethPrices.push(data_transactions.result[i]);
         }
     };
-     
+    let values = getInputAndOutputValueInEuro(ethPrices);
+    setValues(values[0], values[1], values[2])
+
     showGrid(ethPrices);
     return 1
     
@@ -125,6 +153,10 @@ toggleSpinner = () => {
 
 function gweiToEth(gwei) {
     return gwei / Math.pow(10, 18)
+}
+
+const inOrOut = (to) => {
+    return to.toLowerCase() === ADR.toLowerCase() ? 'IN' : 'OUT';
 }
 
 /**
