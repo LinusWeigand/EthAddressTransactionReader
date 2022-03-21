@@ -1,7 +1,8 @@
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
-let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`
+let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
+let PRICE_TIME = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=`;
 
 let rowData = [];
 const input = document.querySelector("#exampleFormControlInput1");
@@ -79,14 +80,22 @@ const setValues = (input, output, profit) => {
     profit_label.innerHTML = `Profit: ${Math.round(profit * 100) / 100} €`;
 }
 
-const setBalance = (balance) => {
+const setBalance = async (balance) => {
         const balance_label=document.querySelector('#account_balance');
-        balance_label.innerHTML = `Balance: ${gweiToEth(Number(balance))} ETH`;
+        const balanceEth = gweiToEth(Number(balance));
+        balance_label.innerHTML = `Balance: ${balanceEth} ETH (${await getCurrentPriceOEth(balanceEth) + '€'})`;
 }
+
+getCurrentPriceOEth = async (ethBalance) => {
+   const priceResponse =  await getEthPrice(new Date().getTime());
+   return Math.round(priceResponse.Data.Data[0].close * ethBalance *100)/100;
+};
+
+
 
 async function getEthPrice(timeStamp) {
     //604800 seconds -> 7 days
-    const URL_CRYPTOCOMPARE = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=${timeStamp}`
+    const URL_CRYPTOCOMPARE = `${PRICE_TIME}${timeStamp}`
     const response = await fetch(URL_CRYPTOCOMPARE);
     return await response.json();
 }
