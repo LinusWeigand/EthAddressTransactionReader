@@ -8,15 +8,17 @@ let rowData = [];
 const input = document.querySelector("#exampleFormControlInput1");
 
 const columnDefs = [
-    { headerName: 'Date', field: "timeStamp", valueFormatter: (p) => new Date(Number(p.value * 1000)).toISOString().split('T')[0], sortable: true, filter: true },
-    { headerName: 'Time', field: "timeStamp", valueFormatter: (p) => new Date(Number(p.value * 1000)).toISOString().split('T')[1].split('.')[0], sortable: true, filter: true, editable: true },
-    { headerName: 'Value', field: "value", valueFormatter: (p) => (gweiToEth(p.value)) + " ETH", sortable: true, filter: true, editable: true },
+    { headerName: 'Date', field: "date", sortable: true, filter: true },
+    { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
+    { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
     { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
     { headerName: 'IN/OUT', field: "to", valueFormatter: (p) => inOrOut(p.value), sortable: true, filter: true },
     { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
     { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => (p.value / Math.pow(10, 18)) + " ETH", sortable: true, filter: true, editable: true },
     { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true },
 ];
+
+
 
 const gridOptions = {
     pagination: true,
@@ -126,10 +128,15 @@ async function fetchData() {
     for(let i=0; i<data_transactions.result.length; i++){
         const ethResp = await getEthPrice(data_transactions.result[i].timeStamp, data_transactions);
         if(ethResp.Data.Data){
+            const timestamp = data_transactions.result[i].date;
+            const val = data_transactions.result[i].value;
             data_transactions.result[i].price = ethResp.Data.Data[1].close;
-            data_transactions.result[i].valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value)
-            data_transactions.result[i].fee = data_transactions.result[i].gasPrice * data_transactions.result[i].gasUsed
-            data_transactions.result[i].feeInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].fee)
+            data_transactions.result[i].valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value);
+            data_transactions.result[i].fee = data_transactions.result[i].gasPrice * data_transactions.result[i].gasUsed;
+            data_transactions.result[i].feeInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].fee);
+            data_transactions.result[i].time =  new Date(Number(timestamp * 1000)).toISOString().split('T')[1].split('.')[0];
+            data_transactions.result[i].date =  new Date(Number(timestamp * 1000)).toISOString().split('T')[0];
+            data_transactions.result[i].value = (gweiToEth(val)) + " ETH";
             ethPrices.push(data_transactions.result[i]);
         }
     };
