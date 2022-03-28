@@ -128,12 +128,17 @@ async function fetchData() {
     for(let i=0; i<data_transactions.result.length; i++){
         const ethResp = await getEthPrice(data_transactions.result[i].timeStamp, data_transactions);
         if(ethResp.Data.Data){
-            const timestamp = data_transactions.result[i].date;
+            const timestamp = data_transactions.result[i].timestamp;
             const val = data_transactions.result[i].value;
             data_transactions.result[i].price = ethResp.Data.Data[1].close;
             data_transactions.result[i].valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value);
             data_transactions.result[i].fee = data_transactions.result[i].gasPrice * data_transactions.result[i].gasUsed;
             data_transactions.result[i].feeInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].fee);
+            console.log("Hallo")
+            console.log(data_transactions)
+            console.log(timestamp)
+            console.log(new Date(Number(timestamp)).toISOString())
+            console.log("Tschüss")
             data_transactions.result[i].time =  new Date(Number(timestamp * 1000)).toISOString().split('T')[1].split('.')[0];
             data_transactions.result[i].date =  new Date(Number(timestamp * 1000)).toISOString().split('T')[0];
             data_transactions.result[i].value = (gweiToEth(val)) + " ETH";
