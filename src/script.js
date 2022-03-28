@@ -8,14 +8,16 @@ let rowData = [];
 const input = document.querySelector("#exampleFormControlInput1");
 
 const columnDefs = [
-    { headerName: 'Date', field: "date", sortable: true, filter: true },
+    { headerName: 'Date', field: "date", sortable: true, filter: true, editable: true},
     { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
     { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
     { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'IN/OUT', field: "to", valueFormatter: (p) => inOrOut(p.value), sortable: true, filter: true },
+    { headerName: 'Bought so far in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+    { headerName: 'Bought so far in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
+    { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
     { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
-    { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => (p.value / Math.pow(10, 18)) + " ETH", sortable: true, filter: true, editable: true },
-    { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true },
+    { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
+    { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
 ];
 
 
@@ -61,12 +63,12 @@ const getInputAndOutputValueInEuro = (data_transactions) => {
     var input = 0
     var output = 0
     data_transactions.map((it) => {
-        if(inOrOut(it.to) === "IN") {
+        if(it.inOrOut === "IN") {
             input += it.valueInEuro
         }else {
             output += it.valueInEuro
         }
-        profit += inOrOut(it.to) === "IN" ? it.valueInEuro : -it.valueInEuro
+        profit += it.inOrOut === "IN" ? it.valueInEuro : -it.valueInEuro
     })
     console.log(input, output, profit)
     return [input, output, profit]
@@ -137,6 +139,10 @@ async function fetchData() {
             data_transactions.result[i].time =  new Date(Number(timestamp * 1000)).toISOString().split('T')[1].split('.')[0];
             data_transactions.result[i].date =  new Date(Number(timestamp * 1000)).toISOString().split('T')[0];
             data_transactions.result[i].value = (gweiToEth(val)) + " ETH";
+            data_transactions.result[i].fee = (data_transactions.result[i].fee / Math.pow(10, 18))
+            data_transactions.result[i].inOrOut = inOrOut(data_transactions.result[i].to)
+            data_transactions.result[i].buyEuro = 1
+            data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18))
             ethPrices.push(data_transactions.result[i]);
         }
     };
