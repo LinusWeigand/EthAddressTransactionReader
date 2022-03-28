@@ -1,3 +1,4 @@
+
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
@@ -15,6 +16,7 @@ const columnDefs = [
     { headerName: 'Bought so far in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
     { headerName: 'Bought so far in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
     { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
+    { headerName: 'Profit/Loss', field: "profitLoss", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`,sortable: true, filter: true, editable: true},
     { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
     { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
     { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
@@ -126,23 +128,40 @@ async function fetchData() {
 
     const ethPrices = [];
     
-    
+    let boughtEuroSoFar = 0;
     for(let i=0; i<data_transactions.result.length; i++){
         const ethResp = await getEthPrice(data_transactions.result[i].timeStamp, data_transactions);
+        
+
         if(ethResp.Data.Data){
             const timestamp = data_transactions.result[i].timeStamp;
             const val = data_transactions.result[i].value;
             data_transactions.result[i].price = ethResp.Data.Data[1].close;
-            data_transactions.result[i].valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value);
+            let valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value);
+            data_transactions.result[i].valueInEuro = valueInEuro;
+
+            let inOUT = inOrOut(data_transactions.result[i].to);
+            data_transactions.result[i].inOrOut = inOUT;
+
+            let profitLoss = inOUT == "OUT" ? data_transactions.result[i].valueInEuro - boughtEuroSoFar : "-";
+            console.log(data_transactions.result[i].valueInEuro)
+            data_transactions.result[i].profitLoss = profitLoss;
+            
+            
+            
+            if(inOUT == "OUT") {
+                valueInEuro = -valueInEuro;
+            }
+            boughtEuroSoFar += valueInEuro;
             data_transactions.result[i].fee = data_transactions.result[i].gasPrice * data_transactions.result[i].gasUsed;
             data_transactions.result[i].feeInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].fee);
             data_transactions.result[i].time =  new Date(Number(timestamp * 1000)).toISOString().split('T')[1].split('.')[0];
             data_transactions.result[i].date =  new Date(Number(timestamp * 1000)).toISOString().split('T')[0];
             data_transactions.result[i].value = (gweiToEth(val)) + " ETH";
-            data_transactions.result[i].fee = (data_transactions.result[i].fee / Math.pow(10, 18))
-            data_transactions.result[i].inOrOut = inOrOut(data_transactions.result[i].to)
-            data_transactions.result[i].buyEuro = 1
-            data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18))
+            data_transactions.result[i].fee = (data_transactions.result[i].fee / Math.pow(10, 18));
+            
+            data_transactions.result[i].buyEuro = boughtEuroSoFar;
+            data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18));
             ethPrices.push(data_transactions.result[i]);
         }
     };
