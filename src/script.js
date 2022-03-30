@@ -33,35 +33,13 @@ const gridOptions = {
 const bitcoinButton = document.querySelector("#bitcoin_button");
 const ethereumButton = document.querySelector("#ethereum_button");
 const addressLabel = document.querySelector("#address_label");
+const okButton = document.querySelector("#okButton");
+const exportButton = document.querySelector("#exportButton")
 
 bitcoinButtonAddEventListener();
 ethereumButtonAddEventListener();
-
-const okButton = document.querySelector("#okButton");
-okButton.addEventListener("mousedown", async (e) => {
-    toggleSpinner();
-    gridOptions.api && gridOptions.api.destroy();
-    var address = input.value.trim()
-    if(isAddress(address)) {    
-        balance = await fetchBalance();
-        ADR = address
-        URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
-        URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
-        fetchData();
-        setBalance(balance);
-        
-    }else {
-        toggleSpinner();
-        alert('Not a valid eth address!');
-        //const errorMessageParagraph = document.querySelector('#errorMessage');
-        //errorMessageParagraph.innerHTML = 'not a valid eth address';
-    }
-})
-
-const exportButton = document.querySelector("#exportButton")
-exportButton.addEventListener("mousedown", (e) => {
-    gridOptions.api && gridOptions.api.exportDataAsCsv();
-})
+okButtonAddEventListener();
+exportButtonAddEventListener();
 
 const getInputAndOutputValueInEuro = (data_transactions) => {
     var profit = 0
@@ -186,7 +164,7 @@ const showGrid = (ethPrices) => {
 
 }
 
-toggleSpinner = () => {
+let toggleSpinner = () => {
     const spinner = document.querySelector('#spinner');
     if(spinner.style.display === 'block') {
         spinner.style.display = 'none';
@@ -196,15 +174,15 @@ toggleSpinner = () => {
 }
 
 
-function gweiToEth(gwei) {
-    return gwei / Math.pow(10, 18)
+let gweiToEth = (gwei) => {
+    return gwei / Math.pow(10, 18);
 }
 
-const inOrOut = (to) => {
+let inOrOut = (to) => {
     return to.toLowerCase() === ADR.toLowerCase() ? 'IN' : 'OUT';
 }
 
-const bitcoinButtonAddEventListener = () => {
+let bitcoinButtonAddEventListener = () => {
     bitcoinButton.addEventListener("mousedown", (e) => {
         state = "Bitcoin";
         bitcoinButton.className = "btn btn-primary";
@@ -213,13 +191,39 @@ const bitcoinButtonAddEventListener = () => {
     });
 }
 
-const ethereumButtonAddEventListener = () => {
+let ethereumButtonAddEventListener = () => {
     ethereumButton.addEventListener("mousedown", (e) => {
         state = "Ethereum";
         bitcoinButton.className = "btn btn-secondary";
         ethereumButton.className = "btn btn-primary";
         addressLabel.innerHTML = "Ethereum Address:";
     });
+}
+
+let okButtonAddEventListener = () => {
+    okButton.addEventListener("mousedown", async (e) => {
+        toggleSpinner();
+        gridOptions.api && gridOptions.api.destroy();
+        var address = input.value.trim()
+        if(isAddress(address)) {    
+            balance = await fetchBalance();
+            ADR = address
+            URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+            URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
+            fetchData();
+            setBalance(balance);
+            
+        }else {
+            toggleSpinner();
+            alert('Not a valid eth address!');
+        }
+    })
+}
+
+let exportButtonAddEventListener = () => {
+    exportButton.addEventListener("mousedown", (e) => {
+        gridOptions.api && gridOptions.api.exportDataAsCsv();
+    })
 }
 
 /**
@@ -229,7 +233,7 @@ const ethereumButtonAddEventListener = () => {
  * @param {String} address the given HEX adress
  * @return {Boolean}
 */
-var isAddress = function (address) {
+let isAddress = function (address) {
     if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) {
         // check if it has the basic requirements of an address
         return false;
@@ -249,11 +253,11 @@ var isAddress = function (address) {
  * @param {String} address the given HEX adress
  * @return {Boolean}
 */
-var isChecksumAddress = function (address) {
+let isChecksumAddress = function (address) {
     // Check each case
     address = address.replace('0x','');
-    var addressHash = keccak256(address.toLowerCase());
-    for (var i = 0; i < 40; i++ ) {
+    let addressHash = keccak256(address.toLowerCase());
+    for (let i = 0; i < 40; i++ ) {
         // the nth letter should be uppercase if the nth digit of casemap is 1
         if ((parseInt(addressHash[i], 16) > 7 && address[i].toUpperCase() !== address[i]) || (parseInt(addressHash[i], 16) <= 7 && address[i].toLowerCase() !== address[i])) {
             return false;
