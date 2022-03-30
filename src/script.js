@@ -35,13 +35,9 @@ const ethereumButton = document.querySelector("#ethereum_button");
 const addressLabel = document.querySelector("#address_label");
 const okButton = document.querySelector("#okButton");
 const exportButton = document.querySelector("#exportButton")
+const spinner = document.querySelector("#spinner");
 
-bitcoinButtonAddEventListener();
-ethereumButtonAddEventListener();
-okButtonAddEventListener();
-exportButtonAddEventListener();
-
-const getInputAndOutputValueInEuro = (data_transactions) => {
+let getInputAndOutputValueInEuro = (data_transactions) => {
     var profit = 0
     var input = 0
     var output = 0
@@ -57,7 +53,7 @@ const getInputAndOutputValueInEuro = (data_transactions) => {
     return [input, output, profit]
 }
 
-const setValues = (input, output, profit) => {
+let setValues = (input, output, profit) => {
     const input_label = document.querySelector('#input');
     const output_label = document.querySelector('#output');
     const profit_label = document.querySelector('#profit')
@@ -67,39 +63,36 @@ const setValues = (input, output, profit) => {
     profit_label.innerHTML = `Profit: ${Math.round(profit * 100) / 100} €`;
 }
 
-const setBalance = async (balance) => {
+let setBalance = async (balance) => {
         const balance_label=document.querySelector('#account_balance');
         const balanceEth = gweiToEth(Number(balance));
         balance_label.innerHTML = `Balance: ${balanceEth} ETH (${await getCurrentPriceOEth(balanceEth) + '€'})`;
 }
 
-getCurrentPriceOEth = async (ethBalance) => {
+let getCurrentPriceOEth = async (ethBalance) => {
    const priceResponse =  await getEthPrice(new Date().getTime());
    return Math.round(priceResponse.Data.Data[0].close * ethBalance *100)/100;
 };
 
-async function getEthPrice(timeStamp) {
-    //604800 seconds -> 7 days
-    const URL_CRYPTOCOMPARE = `${PRICE_TIME}${timeStamp}`
+let getEthPrice = async (timeStamp) => {
+    const URL_CRYPTOCOMPARE = `${PRICE_TIME}${timeStamp}`;
     const response = await fetch(URL_CRYPTOCOMPARE);
     return await response.json();
-}
+};
 
-calcPriceThen = (data, gData, i) => {
+let calcPriceThen = (data, gData, i) => {
     const price = parseFloat(data["Data"]["Data"][1]["close"]);
     const euro = gweiToEth(gData["result"][i]["value"]) * price;
     return euro;
-}
+};
 
-const fetchBalance = async () => {
+let fetchBalance = async () => {
     let response_balance = await fetch(URL_ETHERSCAN_ACCOUNT_BALANCE)
     const response = await response_balance.json();
     return response.result;
- 
 } 
 
-
-async function fetchData() {
+let fetchBalanceThen = async () => {
     const response_transactions = await fetch(URL_ETHERSCAN_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
@@ -148,10 +141,9 @@ async function fetchData() {
     setValues(values[0], values[1], values[2])
 
     showGrid(ethPrices);
-    
 }
 
-const showGrid = (ethPrices) => {
+let showGrid = (ethPrices) => {
     toggleSpinner();
 
     // let the grid know which columns and what data to use
@@ -165,14 +157,12 @@ const showGrid = (ethPrices) => {
 }
 
 let toggleSpinner = () => {
-    const spinner = document.querySelector('#spinner');
     if(spinner.style.display === 'block') {
         spinner.style.display = 'none';
     } else {
         spinner.style.display = 'block';
     }
 }
-
 
 let gweiToEth = (gwei) => {
     return gwei / Math.pow(10, 18);
@@ -265,3 +255,8 @@ let isChecksumAddress = function (address) {
     }
     return true;
 };
+
+bitcoinButtonAddEventListener();
+ethereumButtonAddEventListener();
+okButtonAddEventListener();
+exportButtonAddEventListener();
