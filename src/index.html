@@ -19,20 +19,32 @@
         </style>
     </header>
     <body>
+         </div>
+         <button type="button" class="btn btn-secondary" id="bitcoin_button">
+            <span class="iconify" data-icon="logos:bitcoin" width="100px" height="100px"></span>
+        </button>
+        <button type="button" class="btn btn-primary" id="ethereum_button">
+            <span class="iconify" data-icon="logos:ethereum" width="100px" height="100px"></span>
+        </button>
+         <div>
           <div class="mb-3">
-            <label for="exampleFormControlInput1" class="form-label">Ethereum-Address</label>
+            <label for="exampleFormControlInput1" class="form-label" id="address_label">Ethereum Address:</label>
             <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
-          </div>
+          
             <p id="account_balance"></p>
             <p id="input"></p>
             <p id="output"></p>
             <p id="profit"></p>
-            <button type="button" class="btn btn-primary" id="okButton">OK</button>
+            
+            <button type="button" class="btn btn-primary" id="okButton">
+                Ok
+            </button>
+            
             <button type="button" class="btn btn-secondary" id="exportButton">Export</button>
-
+            
             <div id="spinner" style="display:none"><img title="" alt="" src="./spinner.gif" /></div>
             <div id="myGrid" style="height: 1500px; width: 1900px;" class="ag-theme-alpine"></div>
-        
+            <script src="https://code.iconify.design/2/2.2.0/iconify.min.js"></script>
             <script src="https://cdn.jsdelivr.net/gh/emn178/js-sha3/build/sha3.min.js"></script>
             <script type="text/javascript" src="script.js"></script>
     </body>

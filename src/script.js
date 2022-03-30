@@ -3,6 +3,7 @@ let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
 let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
 let PRICE_TIME = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=`;
+let state = "Ethereum";
 
 let rowData = [];
 const input = document.querySelector("#exampleFormControlInput1");
@@ -29,10 +30,14 @@ const gridOptions = {
         resizable: true,
     },
 };
-input.addEventListener("keyup", (e)=> {
-})
+const bitcoinButton = document.querySelector("#bitcoin_button");
+const ethereumButton = document.querySelector("#ethereum_button");
+const addressLabel = document.querySelector("#address_label");
 
-const okButton = document.querySelector("#okButton")
+bitcoinButtonAddEventListener();
+ethereumButtonAddEventListener();
+
+const okButton = document.querySelector("#okButton");
 okButton.addEventListener("mousedown", async (e) => {
     toggleSpinner();
     gridOptions.api && gridOptions.api.destroy();
@@ -197,6 +202,24 @@ function gweiToEth(gwei) {
 
 const inOrOut = (to) => {
     return to.toLowerCase() === ADR.toLowerCase() ? 'IN' : 'OUT';
+}
+
+const bitcoinButtonAddEventListener = () => {
+    bitcoinButton.addEventListener("mousedown", (e) => {
+        state = "Bitcoin";
+        bitcoinButton.className = "btn btn-primary";
+        ethereumButton.className = "btn btn-secondary";
+        addressLabel.innerHTML = "Bitcoin Address:";
+    });
+}
+
+const ethereumButtonAddEventListener = () => {
+    ethereumButton.addEventListener("mousedown", (e) => {
+        state = "Ethereum";
+        bitcoinButton.className = "btn btn-secondary";
+        ethereumButton.className = "btn btn-primary";
+        addressLabel.innerHTML = "Ethereum Address:";
+    });
 }
 
 /**
