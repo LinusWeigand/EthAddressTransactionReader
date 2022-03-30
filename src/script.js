@@ -1,4 +1,3 @@
-
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
@@ -13,16 +12,14 @@ const columnDefs = [
     { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
     { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
     { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'Bought so far in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'Bought so far in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
+    { headerName: 'Bought in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+    { headerName: 'Bought in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
     { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
     { headerName: 'Profit/Loss', field: "profitLoss", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`,sortable: true, filter: true, editable: true},
     { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
     { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
     { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
 ];
-
-
 
 const gridOptions = {
     pagination: true,
@@ -55,6 +52,7 @@ okButton.addEventListener("mousedown", async (e) => {
         //errorMessageParagraph.innerHTML = 'not a valid eth address';
     }
 })
+
 const exportButton = document.querySelector("#exportButton")
 exportButton.addEventListener("mousedown", (e) => {
     gridOptions.api && gridOptions.api.exportDataAsCsv();
@@ -96,8 +94,6 @@ getCurrentPriceOEth = async (ethBalance) => {
    const priceResponse =  await getEthPrice(new Date().getTime());
    return Math.round(priceResponse.Data.Data[0].close * ethBalance *100)/100;
 };
-
-
 
 async function getEthPrice(timeStamp) {
     //604800 seconds -> 7 days
@@ -144,7 +140,7 @@ async function fetchData() {
             data_transactions.result[i].inOrOut = inOUT;
 
             let profitLoss = inOUT == "OUT" ? data_transactions.result[i].valueInEuro - boughtEuroSoFar : "-";
-            console.log(data_transactions.result[i].valueInEuro)
+            
             data_transactions.result[i].profitLoss = profitLoss;
             
             
@@ -169,7 +165,6 @@ async function fetchData() {
     setValues(values[0], values[1], values[2])
 
     showGrid(ethPrices);
-    return 1
     
 }
 
