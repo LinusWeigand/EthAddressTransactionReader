@@ -1,10 +1,12 @@
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
-let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
-let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
-let PRICE_TIME = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=`;
-let URL_BTC_BALANCE = `https://mempool.space/api/address/${ADR}`;
-let URL_BTC_TRANSACTIONS = `https://mempool.space/api/address/${ADR}/txs`;
+//BTC ADR = 1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv
+let URL_ETH_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+let URL_ETH_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
+let URL_ETH_PRICE = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=`;
+
+let URL_BTC_BALANCE_AND_TRANSACTIONS = `https://blockchain.info/rawaddr/${ADR}`;
+let URL_BTC_PRICE = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=BTC&tsym=EUR&limit=1&toTs=`;
 let state = "Ethereum";
 
 let rowData = [];
@@ -77,10 +79,16 @@ let getCurrentPriceOEth = async (ethBalance) => {
 };
 
 let getEthPrice = async (timeStamp) => {
-    const URL_CRYPTOCOMPARE = `${PRICE_TIME}${timeStamp}`;
-    const response = await fetch(URL_CRYPTOCOMPARE);
+    const URL = `${URL_ETH_PRICE}${timeStamp}`;
+    const response = await fetch(URL);
     return await response.json();
 };
+
+let getBtcPrice = async (timeStamp) => {
+    const URL = `${URL_BTC_PRICE}${timeStamp}`;
+    const response = await fetch(URL);
+    return await response.json();
+}
 
 let calcPriceThen = (data, gData, i) => {
     const price = parseFloat(data["Data"]["Data"][1]["close"]);
@@ -89,13 +97,13 @@ let calcPriceThen = (data, gData, i) => {
 };
 
 let fetchEthBalance = async () => {
-    let response_balance = await fetch(URL_ETHERSCAN_ACCOUNT_BALANCE)
+    let response_balance = await fetch(URL_ETH_BALANCE)
     const response = await response_balance.json();
     return response.result;
 } 
 
 let fetchEthData = async () => {
-    const response_transactions = await fetch(URL_ETHERSCAN_TRANSACTIONS);
+    const response_transactions = await fetch(URL_ETH_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
     
@@ -141,9 +149,24 @@ let fetchEthData = async () => {
     };
     let values = getInputAndOutputValueInEuro(ethPrices);
     setValues(values[0], values[1], values[2])
-
     showGrid(ethPrices);
 }
+let fetchBtcData = async () => {
+
+    const response_transactions = await fetch(URL_BTC_BALANCE_AND_TRANSACTIONS);
+    const data_transactions = await response_transactions.json();
+
+    const btcPrices = [];
+
+    // for(let i = 0; i < data_transactions.length; i++) {
+    //     const btcResp = await getBtcPrice(data)
+    //     if(btcResp) {
+            
+    //     }
+    // }
+    console.log(data_transactions);
+    showGrid(data_transactions);
+} 
 
 let showGrid = (ethPrices) => {
     toggleSpinner();
@@ -200,23 +223,23 @@ let okButtonAddEventListener = () => {
         
         switch(state) {
             case "Ethereum": {
-                if(isEthereumAddress(address)) {    
+                if(isEthereumAddress(ADR)) {    
                     balance = await fetchEthBalance();
-                    URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
-                    URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
+                    URL_ETH_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+                    URL_ETH_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
                     fetchEthData();
                     setBalance(balance);
-                    
                 }else {
                     toggleSpinner();
                     alert('Not a valid eth address!');
                 }
+                break;
             }
             default: {
                 //No Btc address validation yet
-                URL_BTC_BALANCE = `https://mempool.space/api/address/${ADR}`;
-                URL_BTC_TRANSACTIONS = `https://mempool.space/api/address/${ADR}/txs`;
-                  
+                URL_BTC_BALANCE_AND_TRANSACTIONS = `https://blockchain.info/rawaddr/${ADR}`;
+                fetchBtcData();
+                break;
             }
         }
 
