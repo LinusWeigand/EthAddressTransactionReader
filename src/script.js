@@ -3,6 +3,8 @@ let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 let URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
 let URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
 let PRICE_TIME = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=ETH&tsym=EUR&limit=1&toTs=`;
+let URL_BTC_BALANCE = `https://mempool.space/api/address/${ADR}`;
+let URL_BTC_TRANSACTIONS = `https://mempool.space/api/address/${ADR}/txs`;
 let state = "Ethereum";
 
 let rowData = [];
@@ -86,13 +88,13 @@ let calcPriceThen = (data, gData, i) => {
     return euro;
 };
 
-let fetchBalance = async () => {
+let fetchEthBalance = async () => {
     let response_balance = await fetch(URL_ETHERSCAN_ACCOUNT_BALANCE)
     const response = await response_balance.json();
     return response.result;
 } 
 
-let fetchBalanceThen = async () => {
+let fetchEthData = async () => {
     const response_transactions = await fetch(URL_ETHERSCAN_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
@@ -194,19 +196,31 @@ let okButtonAddEventListener = () => {
     okButton.addEventListener("mousedown", async (e) => {
         toggleSpinner();
         gridOptions.api && gridOptions.api.destroy();
-        var address = input.value.trim()
-        if(isAddress(address)) {    
-            balance = await fetchBalance();
-            ADR = address
-            URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
-            URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
-            fetchData();
-            setBalance(balance);
-            
-        }else {
-            toggleSpinner();
-            alert('Not a valid eth address!');
+        ADR = input.value.trim()
+        
+        switch(state) {
+            case "Ethereum": {
+                if(isEthereumAddress(address)) {    
+                    balance = await fetchEthBalance();
+                    URL_ETHERSCAN_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
+                    URL_ETHERSCAN_ACCOUNT_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
+                    fetchEthData();
+                    setBalance(balance);
+                    
+                }else {
+                    toggleSpinner();
+                    alert('Not a valid eth address!');
+                }
+            }
+            default: {
+                //No Btc address validation yet
+                URL_BTC_BALANCE = `https://mempool.space/api/address/${ADR}`;
+                URL_BTC_TRANSACTIONS = `https://mempool.space/api/address/${ADR}/txs`;
+                  
+            }
         }
+
+        
     })
 }
 
@@ -223,7 +237,7 @@ let exportButtonAddEventListener = () => {
  * @param {String} address the given HEX adress
  * @return {Boolean}
 */
-let isAddress = function (address) {
+let isEthereumAddress = function (address) {
     if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) {
         // check if it has the basic requirements of an address
         return false;
@@ -255,6 +269,55 @@ let isChecksumAddress = function (address) {
     }
     return true;
 };
+
+let isBitcoinAddress = (address) => {
+    var decoded = base58_decode(address);     
+    if (decoded.length != 25) return false;
+    var cksum = decoded.substr(decoded.length - 4); 
+    var rest = decoded.substr(0, decoded.length - 4);  
+    var good_cksum = hex2a(sha256_digest(hex2a(sha256_digest(rest)))).substr(0, 4);
+    if (cksum != good_cksum) return false;
+    return true;
+}
+
+let base58_decode = (string) => {
+  var table = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  var table_rev = new Array();
+  var i;
+  for (i = 0; i < 58; i++) {
+    table_rev[table[i]] = int2bigInt(i, 8, 0);
+  } 
+  var l = string.length;
+  var long_value = int2bigInt(0, 1, 0);  
+  var num_58 = int2bigInt(58, 8, 0);
+  var c;
+  for(i = 0; i < l; i++) {
+    c = string[l - i - 1];
+    long_value = add(long_value, mult(table_rev[c], Math.pow(num_58, i)));
+  }
+  var hex = bigInt2str(long_value, 16);  
+  var str = hex2a(hex); 
+  var nPad;
+  for (nPad = 0; string[nPad] == table[0]; nPad++);  
+  var output = str;
+  if (nPad > 0) output = repeat("\0", nPad) + str;
+  return output;
+}
+
+let hex2a = (hex) => {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
+
+let repeat = (s, n) => {
+    var a = [];
+    while(a.length < n){
+        a.push(s);
+    }
+    return a.join('');
+}
 
 bitcoinButtonAddEventListener();
 ethereumButtonAddEventListener();
