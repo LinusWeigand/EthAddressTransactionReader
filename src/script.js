@@ -158,12 +158,6 @@ let fetchBtcData = async () => {
 
     const btcPrices = [];
 
-    // for(let i = 0; i < data_transactions.length; i++) {
-    //     const btcResp = await getBtcPrice(data)
-    //     if(btcResp) {
-            
-    //     }
-    // }
     console.log(data_transactions);
     showGrid(data_transactions);
 } 
