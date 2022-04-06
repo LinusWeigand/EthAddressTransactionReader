@@ -1,5 +1,3 @@
-const { grid } = require("@mui/system");
-
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 //BTC ADR = 1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv
@@ -163,26 +161,41 @@ let fetchBtcData = async () => {
     const response_transactions = await fetch(URL_BTC_BALANCE_AND_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
+
     let gridResult = [];
 
     for(let i = 0; i < data_transactions.length; i++) {
+        let row = [];
         const timestamp = data_transactions.txs[i].time;
         const btcPrices = await getBtcPrice(timestamp);
 
         if(btcPrices.Data.Data) {
-            gridResult.result[i].timestamp = timestamp;
-            let value = 0;
+            row.result[i].timestamp = timestamp;
+            let toValue = 0;
             let outputs = data_transactions.txs[i].out;
             for(let j = 0; j < outputs.length; j++) {
-                if(outputs[j].addr !== ADR) {
-                    value += outputs[j].value;
-                } else {
-                    console.log(`Rücküberweisung Transaktion ${j}: `, outputs[j].value);
+                if(outputs[j].addr === ADR) {
+                    toValue += outputs[j].value;
                 }
             }
-            gridResult.result[i].value = value;
+            let fromValue = 0;
+            let inputs = data_transactions.txs[i].inputs;
+            for(let j = 0; j < inputs.length; j++) {
+                if (inputs[j].addr === ADR) {
+                    fromValue += inputs[j].value;
+                }
+            }
+
+            row.result[i].inOrOut = toValue - fromValue > 0 ? "IN" : "OUT";
+            row.result[i].value = toValue - fromValue;
             let price = btcPrices.Data.Data[1].close;
-            gridResult.result[i].valueInEuro = price * satoshiToBtc(value);
+            row.result[i].valueInEuro = price * satoshiToBtc(value);
+            row.result[i].hash = data_transactions.txs[i].hash;
+            let fee = satoshiToBtc(data_transactions.txs[i].fee);
+            row.result[i].fee = fee;
+            row.result[i].feeInEuro = price * fee;
+            gridResult.push(row.result[i]);
+           
         }
     }
     
