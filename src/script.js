@@ -1,3 +1,5 @@
+const { grid } = require("@mui/system");
+
 const APIKEY = '5938SEBM9YJ7JVBMTJF3FIB8IAZHNPZPV4';
 let ADR = '0x240Eb7B9Bde39819E05054EFeB412Ce55250898c';
 //BTC ADR = 1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv
@@ -9,37 +11,41 @@ let URL_BTC_BALANCE_AND_TRANSACTIONS = `https://blockchain.info/rawaddr/${ADR}`;
 let URL_BTC_PRICE = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=BTC&tsym=EUR&limit=1&toTs=`;
 let state = "Ethereum";
 
+
 let rowData = [];
+let columnDefs = [];
+let gridOptions = {};
 const input = document.querySelector("#exampleFormControlInput1");
-
-const columnDefs = [
-    { headerName: 'Date', field: "date", sortable: true, filter: true, editable: true},
-    { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
-    { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
-    { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'Bought in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-    { headerName: 'Bought in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
-    { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
-    { headerName: 'Profit/Loss', field: "profitLoss", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`,sortable: true, filter: true, editable: true},
-    { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
-    { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
-    { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
-];
-
-const gridOptions = {
-    pagination: true,
-    columnDefs: columnDefs,
-    rowData: rowData,
-    defaultColDef: {
-        resizable: true,
-    },
-};
 const bitcoinButton = document.querySelector("#bitcoin_button");
 const ethereumButton = document.querySelector("#ethereum_button");
 const addressLabel = document.querySelector("#address_label");
 const okButton = document.querySelector("#okButton");
 const exportButton = document.querySelector("#exportButton")
 const spinner = document.querySelector("#spinner");
+
+const setGrid = () => {
+    columnDefs = [
+        { headerName: 'Date', field: "date", sortable: true, filter: true, editable: true},
+        { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
+        { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
+        { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+        { headerName: 'Bought in euro', field: "buyEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+        { headerName: 'Bought in ETH', field: "buyETH" ,valueFormatter: (p) => `${p.value} ETH`, sortable: true, filter: true, editable: true },
+        { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
+        { headerName: 'Profit/Loss', field: "profitLoss", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`,sortable: true, filter: true, editable: true},
+        { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
+        { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
+        { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+    ];
+    gridOptions = {
+        pagination: true,
+        columnDefs: columnDefs,
+        rowData: rowData,
+        defaultColDef: {
+            resizable: true,
+        },
+    };
+}
 
 let getInputAndOutputValueInEuro = (data_transactions) => {
     var profit = 0
@@ -67,7 +73,7 @@ let setValues = (input, output, profit) => {
     profit_label.innerHTML = `Profit: ${Math.round(profit * 100) / 100} €`;
 }
 
-let setBalance = async (balance) => {
+let setEthBalance = async (balance) => {
         const balance_label=document.querySelector('#account_balance');
         const balanceEth = gweiToEth(Number(balance));
         balance_label.innerHTML = `Balance: ${balanceEth} ETH (${await getCurrentPriceOEth(balanceEth) + '€'})`;
@@ -108,17 +114,17 @@ let fetchEthData = async () => {
 
     
 
-    const ethPrices = [];
+    const gridResult = [];
     
     let boughtEuroSoFar = 0;
     for(let i=0; i<data_transactions.result.length; i++){
-        const ethResp = await getEthPrice(data_transactions.result[i].timeStamp, data_transactions);
+        const ethPrices = await getEthPrice(data_transactions.result[i].timeStamp);
         
 
-        if(ethResp.Data.Data){
+        if(ethPrices.Data.Data){
             const timestamp = data_transactions.result[i].timeStamp;
             const val = data_transactions.result[i].value;
-            data_transactions.result[i].price = ethResp.Data.Data[1].close;
+            data_transactions.result[i].price = ethPrices.Data.Data[1].close;
             let valueInEuro = data_transactions.result[i].price * gweiToEth(data_transactions.result[i].value);
             data_transactions.result[i].valueInEuro = valueInEuro;
 
@@ -144,22 +150,44 @@ let fetchEthData = async () => {
             
             data_transactions.result[i].buyEuro = boughtEuroSoFar;
             data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18));
-            ethPrices.push(data_transactions.result[i]);
+            gridResult.push(data_transactions.result[i]);
         }
     };
-    let values = getInputAndOutputValueInEuro(ethPrices);
+    let values = getInputAndOutputValueInEuro(gridResult);
     setValues(values[0], values[1], values[2])
-    showGrid(ethPrices);
+    setGrid();
+    showGrid(gridResult);
 }
 let fetchBtcData = async () => {
 
     const response_transactions = await fetch(URL_BTC_BALANCE_AND_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
-    const btcPrices = [];
+    let gridResult = [];
 
-    console.log(data_transactions);
-    showGrid(data_transactions);
+    for(let i = 0; i < data_transactions.length; i++) {
+        const timestamp = data_transactions.txs[i].time;
+        const btcPrices = await getBtcPrice(timestamp);
+
+        if(btcPrices.Data.Data) {
+            gridResult.result[i].timestamp = timestamp;
+            let value = 0;
+            let outputs = data_transactions.txs[i].out;
+            for(let j = 0; j < outputs.length; j++) {
+                if(outputs[j].addr !== ADR) {
+                    value += outputs[j].value;
+                } else {
+                    console.log(`Rücküberweisung Transaktion ${j}: `, outputs[j].value);
+                }
+            }
+            gridResult.result[i].value = value;
+            let price = btcPrices.Data.Data[1].close;
+            gridResult.result[i].valueInEuro = price * satoshiToBtc(value);
+        }
+    }
+    
+    setGrid();
+    showGrid(gridResult);
 } 
 
 let showGrid = (ethPrices) => {
@@ -185,6 +213,10 @@ let toggleSpinner = () => {
 
 let gweiToEth = (gwei) => {
     return gwei / Math.pow(10, 18);
+}
+
+let satoshiToBtc = (satoshis) => {
+    return satoshis / Math.pow(10, 8);
 }
 
 let inOrOut = (to) => {
@@ -222,7 +254,7 @@ let okButtonAddEventListener = () => {
                     URL_ETH_TRANSACTIONS = `https://api.etherscan.io/api?module=account&action=txlist&address=${ADR}&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=${APIKEY}`;
                     URL_ETH_BALANCE = `https://api.etherscan.io/api?module=account&action=balance&address=${ADR}&tag=latest&apikey=${APIKEY}`;
                     fetchEthData();
-                    setBalance(balance);
+                    setEthBalance(balance);
                 }else {
                     toggleSpinner();
                     alert('Not a valid eth address!');
