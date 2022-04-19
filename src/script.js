@@ -21,7 +21,7 @@ const okButton = document.querySelector("#okButton");
 const exportButton = document.querySelector("#exportButton")
 const spinner = document.querySelector("#spinner");
 
-const setGrid = () => {
+const setEthGrid = () => {
     columnDefs = [
         { headerName: 'Date', field: "date", sortable: true, filter: true, editable: true},
         { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
@@ -33,6 +33,27 @@ const setGrid = () => {
         { headerName: 'Profit/Loss', field: "profitLoss", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`,sortable: true, filter: true, editable: true},
         { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
         { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " ETH", sortable: true, filter: true, editable: true },
+        { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+    ];
+    gridOptions = {
+        pagination: true,
+        columnDefs: columnDefs,
+        rowData: rowData,
+        defaultColDef: {
+            resizable: true,
+        },
+    };
+}
+
+const setBtcGrid = () => {
+    columnDefs = [
+        { headerName: 'Date', field: "date", sortable: true, filter: true, editable: true},
+        { headerName: 'Time', field: "time", sortable: true, filter: true, editable: true },
+        { headerName: 'Value', field: "value", sortable: true, filter: true, editable: true },
+        { headerName: 'Value In Euro', field: "valueInEuro" ,valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
+        { headerName: 'IN/OUT', field: "inOrOut", sortable: true, filter: true, editable: true},
+        { headerName: 'Txn Hash', field: "hash", sortable: true, filter: true, editable: true },
+        { headerName: 'Txn Fee', field: "fee", valueFormatter: (p) => p.value + " BTC", sortable: true, filter: true, editable: true },
         { headerName: 'Fee in Euro', field: "feeInEuro", valueFormatter: (p) => `${Math.round(p.value * 100) / 100} €`, sortable: true, filter: true, editable: true },
     ];
     gridOptions = {
@@ -148,12 +169,14 @@ let fetchEthData = async () => {
             
             data_transactions.result[i].buyEuro = boughtEuroSoFar;
             data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18));
+            console.log(data_transactions.result[i]);
             gridResult.push(data_transactions.result[i]);
         }
     };
     let values = getInputAndOutputValueInEuro(gridResult);
     setValues(values[0], values[1], values[2])
-    setGrid();
+    setEthGrid();
+    console.log(gridResult);
     showGrid(gridResult);
 }
 let fetchBtcData = async () => {
@@ -163,14 +186,17 @@ let fetchBtcData = async () => {
 
 
     let gridResult = [];
-
-    for(let i = 0; i < data_transactions.length; i++) {
-        let row = [];
+    console.log("data_transaction.txs: ", data_transactions.txs);
+    console.log("data_transaction.txs.length", data_transactions.txs.length);
+    for(let i = 0; i < data_transactions.txs.length; i++) {
+        let row = data_transactions.txs[i];
         const timestamp = data_transactions.txs[i].time;
         const btcPrices = await getBtcPrice(timestamp);
-
         if(btcPrices.Data.Data) {
-            row.result[i].timestamp = timestamp;
+            row.date = new Date(Number(timestamp * 1000)).toISOString().split('T')[0];
+            row.time = new Date(Number(timestamp * 1000)).toISOString().split('T')[1].split('.')[0];
+
+            row.timestamp = timestamp;
             let toValue = 0;
             let outputs = data_transactions.txs[i].out;
             for(let j = 0; j < outputs.length; j++) {
@@ -186,28 +212,33 @@ let fetchBtcData = async () => {
                 }
             }
 
-            row.result[i].inOrOut = toValue - fromValue > 0 ? "IN" : "OUT";
-            row.result[i].value = toValue - fromValue;
+            row.inOrOut = toValue - fromValue > 0 ? "IN" : "OUT";
+            row.value = satoshiToBtc(toValue - fromValue);
             let price = btcPrices.Data.Data[1].close;
-            row.result[i].valueInEuro = price * satoshiToBtc(value);
-            row.result[i].hash = data_transactions.txs[i].hash;
+            //row.valueInEuro = price * satoshiToBtc(value);
+            row.hash = data_transactions.txs[i].hash;
             let fee = satoshiToBtc(data_transactions.txs[i].fee);
-            row.result[i].fee = fee;
-            row.result[i].feeInEuro = price * fee;
-            gridResult.push(row.result[i]);
+            row.fee = fee;
+            row.feeInEuro = price * fee;
+            
+
+
+
+            console.log(row);
+            gridResult.push(row);
            
         }
     }
-    
-    setGrid();
+    console.log(gridResult);
+    setBtcGrid();
     showGrid(gridResult);
 } 
 
-let showGrid = (ethPrices) => {
+let showGrid = (gridResult) => {
     toggleSpinner();
 
     // let the grid know which columns and what data to use
-    gridOptions.rowData = ethPrices;
+    gridOptions.rowData = gridResult;
     // lookup the container we want the Grid to use
     const eGridDiv = document.querySelector('#myGrid');
     
