@@ -78,7 +78,6 @@ let getInputAndOutputValueInEuro = (data_transactions) => {
         }
         profit += it.inOrOut === "IN" ? it.valueInEuro : -it.valueInEuro
     })
-    console.log(input, output, profit)
     return [input, output, profit]
 }
 
@@ -95,13 +94,24 @@ let setValues = (input, output, profit) => {
 let setEthBalance = async (balance) => {
         const balance_label=document.querySelector('#account_balance');
         const balanceEth = gweiToEth(Number(balance));
-        balance_label.innerHTML = `Balance: ${balanceEth} ETH (${await getCurrentPriceOEth(balanceEth) + '€'})`;
+        balance_label.innerHTML = `Balance: ${balanceEth} ETH (${await getCurrentPriceEth(balanceEth) + '€'})`;
 }
 
-let getCurrentPriceOEth = async (ethBalance) => {
+const setBtcBalance = async (balance) => {
+    const balance_label=document.querySelector('#account_balance');
+    const balanceBtc = satoshiToBtc(Number(balance));
+    balance_label.innerHTML = `Balance: ${balanceBtc} BTC (${await getCurrentPriceBtc(balanceBtc) + '€'})`;
+}
+
+let getCurrentPriceEth = async (ethBalance) => {
    const priceResponse =  await getEthPrice(new Date().getTime());
-   return Math.round(priceResponse.Data.Data[0].close * ethBalance *100)/100;
+   return Math.round(priceResponse.Data.Data[0].close * ethBalance * 100) / 100;
 };
+
+let getCurrentPriceBtc = async (btcBalance) => {
+    const priceResponse =  await getBtcPrice(new Date().getTime());
+    return Math.round(priceResponse.Data.Data[0].close * btcBalance * 100) / 100;
+ };
 
 let getEthPrice = async (timeStamp) => {
     const URL = `${URL_ETH_PRICE}${timeStamp}`;
@@ -127,6 +137,12 @@ let fetchEthBalance = async () => {
     return response.result;
 } 
 
+const fetchBtcBalance = async () => {
+    let response_balance = await fetch(URL_BTC_BALANCE_AND_TRANSACTIONS)
+    const response = await response_balance.json();
+    return response.final_balance;
+}
+
 let fetchEthData = async () => {
     const response_transactions = await fetch(URL_ETH_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
@@ -148,12 +164,12 @@ let fetchEthData = async () => {
             let inOUT = inOrOut(data_transactions.result[i].to);
             data_transactions.result[i].inOrOut = inOUT;
 
-            let profitLoss = inOUT == "OUT" ? data_transactions.result[i].valueInEuro - boughtEuroSoFar : "-";
+            let profitLoss = inOUT === "OUT" ? data_transactions.result[i].valueInEuro - boughtEuroSoFar : "-";
             
             data_transactions.result[i].profitLoss = profitLoss;
             
             
-            if(inOUT == "OUT") {
+            if(inOUT === "OUT") {
                 valueInEuro = -valueInEuro;
             }
             boughtEuroSoFar += valueInEuro;
@@ -166,14 +182,12 @@ let fetchEthData = async () => {
             
             data_transactions.result[i].buyEuro = boughtEuroSoFar;
             data_transactions.result[i].buyETH = gweiToEth(Math.pow(10, 18));
-            console.log(data_transactions.result[i]);
             gridResult.push(data_transactions.result[i]);
         }
     };
     let values = getInputAndOutputValueInEuro(gridResult);
     setValues(values[0], values[1], values[2])
     setEthGrid();
-    console.log(gridResult);
     showGrid(gridResult);
 }
 let fetchBtcData = async () => {
@@ -182,8 +196,6 @@ let fetchBtcData = async () => {
 
     let gridResult = [];
 
-    console.log("data_transaction.txs: ", data_transactions.txs);
-    console.log("data_transaction.txs.length", data_transactions.txs.length);
     for(let i = 0; i < data_transactions.txs.length; i++) {
         let row = data_transactions.txs[i];
         const timestamp = data_transactions.txs[i].time;
@@ -219,12 +231,10 @@ let fetchBtcData = async () => {
 
             row.valueInEuro = row.value * price;
 
-            console.log(row);
             gridResult.push(row);
            
         }
     }
-    console.log(gridResult);
     setBtcGrid();
     showGrid(gridResult);
 } 
@@ -285,6 +295,7 @@ let okButtonAddEventListener = () => {
         toggleSpinner();
         gridOptions.api && gridOptions.api.destroy();
         ADR = input.value.trim()
+        console.log(ADR);
         
         switch(state) {
             case "Ethereum": {
@@ -303,7 +314,10 @@ let okButtonAddEventListener = () => {
             default: {
                 //No Btc address validation yet
                 URL_BTC_BALANCE_AND_TRANSACTIONS = `https://blockchain.info/rawaddr/${ADR}`;
+                balance = await fetchBtcBalance();
+                console.log(URL_BTC_BALANCE_AND_TRANSACTIONS);
                 fetchBtcData();
+                setBtcBalance(balance);
                 break;
             }
         }
