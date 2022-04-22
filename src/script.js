@@ -131,8 +131,6 @@ let fetchEthData = async () => {
     const response_transactions = await fetch(URL_ETH_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
-    
-
     const gridResult = [];
     
     let boughtEuroSoFar = 0;
@@ -153,7 +151,6 @@ let fetchEthData = async () => {
             let profitLoss = inOUT == "OUT" ? data_transactions.result[i].valueInEuro - boughtEuroSoFar : "-";
             
             data_transactions.result[i].profitLoss = profitLoss;
-            
             
             
             if(inOUT == "OUT") {
@@ -180,12 +177,11 @@ let fetchEthData = async () => {
     showGrid(gridResult);
 }
 let fetchBtcData = async () => {
-
     const response_transactions = await fetch(URL_BTC_BALANCE_AND_TRANSACTIONS);
     const data_transactions = await response_transactions.json();
 
-
     let gridResult = [];
+
     console.log("data_transaction.txs: ", data_transactions.txs);
     console.log("data_transaction.txs.length", data_transactions.txs.length);
     for(let i = 0; i < data_transactions.txs.length; i++) {
@@ -220,9 +216,8 @@ let fetchBtcData = async () => {
             let fee = satoshiToBtc(data_transactions.txs[i].fee);
             row.fee = fee;
             row.feeInEuro = price * fee;
-            
 
-
+            row.valueInEuro = row.value * price;
 
             console.log(row);
             gridResult.push(row);
